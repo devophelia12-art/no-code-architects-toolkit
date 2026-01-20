@@ -341,8 +341,31 @@ def create_app():
     discover_and_register_blueprints(app)
 
     return app
+    # =========================
+    # Health Check (Salad 503 Fix)
+    # =========================
+    @app.route("/", methods=["GET"])
+    def health_check():
+        return {
+            "status": "ok",
+            "service": "nca-salad-api",
+            "build_number": BUILD_NUMBER
+        }, 200
+
+    # =========================
+    # Test Endpoint (Queue Enabled)
+    # =========================
+    @app.route("/v1/test", methods=["POST"])
+    @app.queue_task()
+    def test_endpoint(job_id=None, data=None):
+        return {
+            "message": "Test endpoint working",
+            "received_data": data,
+            "job_id": job_id
+        }, "/v1/test", 200
 
 app = create_app()
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
